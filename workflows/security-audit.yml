@@ -1,0 +1,29 @@
+name: .NET Security Audit
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install dotnet-audit tool
+        run: dotnet tool install --global dotnet-audit
+
+      - name: Run audit on all projects
+        run: |
+          for proj in $(find . -name "*.csproj"); do
+            echo "?? Auditing $proj"
+            dotnet restore "$proj"
+            dotnet audit "$proj" || true
+          done
