@@ -22,6 +22,7 @@ jobs:
 
       - name: Run audit on all projects
         run: |
+          set -e
           for proj in $(find . -name "*.csproj"); do
             echo "🔍 Auditing $proj"
             dotnet restore "$proj"
