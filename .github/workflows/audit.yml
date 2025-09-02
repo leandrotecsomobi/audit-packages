@@ -25,5 +25,5 @@ jobs:
           for proj in $(find . -name "*.csproj"); do
             echo "🔍 Auditing $proj"
             dotnet restore "$proj"
-            dotnet audit "$proj" || true
+            dotnet audit "$proj"
           done
