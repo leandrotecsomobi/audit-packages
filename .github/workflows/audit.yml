@@ -1,9 +1,12 @@
-name: .NET Security Audit
+name: Reusable .NET Security Audit
 
 on:
-  push:
-  pull_request:
-  workflow_dispatch:
+  workflow_call:   # Permite ser chamado de outros repositórios
+    inputs:
+      dotnet-version:
+        required: false
+        type: string
+        default: '8.0.x'
 
 jobs:
   audit:
@@ -15,15 +18,25 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: ${{ inputs.dotnet-version }}
 
       - name: Install dotnet-audit tool
         run: dotnet tool install --global dotnet-audit
 
-      - name: Run audit on all projects
+      - name: Run audit on all projects and save JSON
         run: |
+          set -e
+          mkdir -p audit-results
           for proj in $(find . -name "*.csproj"); do
             echo "🔍 Auditing $proj"
             dotnet restore "$proj"
-            dotnet audit "$proj"
+            # salva o resultado em JSON separado por projeto
+            safe_name=$(echo "$proj" | sed 's/[^a-zA-Z0-9]/_/g')
+            dotnet audit "$proj" --format json > "audit-results/${safe_name}.json"
           done
+
+      - name: Upload audit results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-audit-results
+          path: audit-results/
